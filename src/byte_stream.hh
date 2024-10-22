@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <string>
 #include <string_view>
-
+using namespace std;
 class Reader;
 class Writer;
 
@@ -25,12 +25,16 @@ protected:
   // Please add any additional state to the ByteStream here, and not to the Writer and Reader interfaces.
   uint64_t capacity_;
   bool error_ {};
+  bool closed_ {false};
+  string buffer_;
+  uint64_t bytes_pushed_ {0};
+  uint64_t bytes_popped_ {0};
 };
 
 class Writer : public ByteStream
 {
 public:
-  void push( std::string data ); // Push data to stream, but only as much as available capacity allows.
+  void push( string data ); // Push data to stream, but only as much as available capacity allows.
   void close();                  // Signal that the stream has reached its ending. Nothing more will be written.
 
   bool is_closed() const;              // Has the stream been closed?
@@ -41,7 +45,7 @@ public:
 class Reader : public ByteStream
 {
 public:
-  std::string_view peek() const; // Peek at the next bytes in the buffer
+  string_view peek() const; // Peek at the next bytes in the buffer
   void pop( uint64_t len );      // Remove `len` bytes from the buffer
 
   bool is_finished() const;        // Is the stream finished (closed and fully popped)?
@@ -53,4 +57,4 @@ public:
  * read: A (provided) helper function thats peeks and pops up to `len` bytes
  * from a ByteStream Reader into a string;
  */
-void read( Reader& reader, uint64_t len, std::string& out );
+void read( Reader& reader, uint64_t len, string& out );
