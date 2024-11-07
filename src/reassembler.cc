@@ -21,12 +21,11 @@ void Reassembler::insert(uint64_t first_index, string data, bool is_last_substri
     );
 
     unassembled_bytes += item.data.size();
+    
     auto insert_iter = buffer_.begin();
     while (insert_iter != buffer_.end() && insert_iter->first_index < item.first_index) {
     ++insert_iter;
 }
-
-
     auto iter = insert_iter;
     while (iter != buffer_.end() && item.last_index >= iter->first_index) {
         if (item.last_index < iter->last_index) {
