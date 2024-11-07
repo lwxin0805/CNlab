@@ -1,0 +1,5 @@
+/home/wx/Desktop/CN_lab/src/build/CMakeFiles/minnow_debug.dir
+/home/wx/Desktop/CN_lab/src/build/CMakeFiles/minnow_sanitized.dir
+/home/wx/Desktop/CN_lab/src/build/CMakeFiles/minnow_optimized.dir
+/home/wx/Desktop/CN_lab/src/build/CMakeFiles/edit_cache.dir
+/home/wx/Desktop/CN_lab/src/build/CMakeFiles/rebuild_cache.dir
