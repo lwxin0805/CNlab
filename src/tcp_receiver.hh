@@ -1,3 +1,4 @@
+
 #pragma once
 
 #include "reassembler.hh"
@@ -27,4 +28,9 @@ public:
 
 private:
   Reassembler reassembler_;
+  Wrap32 zero_point = Wrap32( 0 );
+  Wrap32 next_acknum = Wrap32( 0 );
+  uint64_t checkpoint = 0;
+  bool is_zero_point_set = false;
+  bool RST_ = reassembler_.reader().has_error();
 };
