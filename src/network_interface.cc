@@ -16,9 +16,9 @@ NetworkInterface::NetworkInterface( string_view name,
   , port_( notnull( "OutputPort", move( port ) ) )
   , ethernet_address_( ethernet_address )
   , ip_address_( ip_address )
-  , current_time_(0)
-  , arp_table_()
-  , frame_queue_()
+  , currtime_(0)
+  , arp_table()
+  , frame_queue()
 {
   cerr << "DEBUG: Network interface has Ethernet address " << to_string( ethernet_address ) << " and IP address "
        << ip_address.ip() << "\n";
@@ -27,14 +27,14 @@ NetworkInterface::NetworkInterface( string_view name,
 void NetworkInterface::send_datagram(const InternetDatagram& dgram, const Address& next_hop) {
     EthernetFrame messsage = create_ipv4_frame(dgram);
     const uint32_t target_ip = next_hop.ipv4_numeric();
-    auto it = arp_table_.find(target_ip);
-    if (it == arp_table_.end() || it->second.second < current_time_) {
-        frame_queue_[target_ip].first.push(move(messsage));
+    auto it = arp_table.find(target_ip);
+    if (it == arp_table.end() || it->second.second < currtime_) {
+        frame_queue[target_ip].first.push(move(messsage));
         EthernetFrame arp_request_frame;
         send_arp_request(target_ip, arp_request_frame);
         return;
     } else {
-        messsage.header.dst = arp_table_[target_ip].first;
+        messsage.header.dst = arp_table[target_ip].first;
         transmit(messsage);
     }
 }
@@ -49,8 +49,8 @@ EthernetFrame NetworkInterface::create_ipv4_frame(const InternetDatagram& dgram)
 
 void NetworkInterface::send_arp_request( const uint32_t target_ip, EthernetFrame& arp_request_frame )
 {
-  auto it = frame_queue_.find(target_ip);
-  if (it != frame_queue_.end() && it->second.second.has_value() && it->second.second >= current_time_) {
+  auto it = frame_queue.find(target_ip);
+  if (it != frame_queue.end() && it->second.second.has_value() && it->second.second >= currtime_) {
         return;
     }
   arp_request_frame.header.type = EthernetHeader::TYPE_ARP;
@@ -63,7 +63,7 @@ void NetworkInterface::send_arp_request( const uint32_t target_ip, EthernetFrame
   arp_request_message.target_ip_address = target_ip;
   arp_request_frame.payload = serialize(arp_request_message);
   transmit(arp_request_frame);
-  frame_queue_[target_ip].second = current_time_ + ARP_REQUEST_TIMEOUT;
+  frame_queue[target_ip].second = currtime_ + ARP_REQUEST_TIMEOUT;
 }
 
 void NetworkInterface::recv_frame( const EthernetFrame& frame )
@@ -74,7 +74,7 @@ void NetworkInterface::recv_frame( const EthernetFrame& frame )
     		case EthernetHeader::TYPE_ARP: {
         		ARPMessage message = ARPMessage();
         		if (parse(message, frame.payload) && message.target_ip_address == ip_address_.ipv4_numeric()) {
-            		arp_table_[message.sender_ip_address] = make_pair(message.sender_ethernet_address, current_time_ + ARP_ENTRY_TIMEOUT);
+            		arp_table[message.sender_ip_address] = make_pair(message.sender_ethernet_address, currtime_ + ARP_ENTRY_TIMEOUT);
             		switch (message.opcode) {
     				case ARPMessage::OPCODE_REQUEST: {
         				EthernetFrame response;
@@ -83,7 +83,7 @@ void NetworkInterface::recv_frame( const EthernetFrame& frame )
         				break;
     					}
     				case ARPMessage::OPCODE_REPLY: {
-        				queue<EthernetFrame>& ip_queue = frame_queue_[message.sender_ip_address].first;
+        				queue<EthernetFrame>& ip_queue = frame_queue[message.sender_ip_address].first;
         				while (!ip_queue.empty()) {
             					ip_queue.front().header.dst = message.sender_ethernet_address;
             					transmit(ip_queue.front());
@@ -132,17 +132,17 @@ void NetworkInterface::make_arp_response( const ARPMessage& message, EthernetFra
 
 void NetworkInterface::tick( const size_t ms_since_last_tick )
 {
-  current_time_ += ms_since_last_tick;
-  for (auto it = arp_table_.begin(); it != arp_table_.end(); ) {
-        if (it->second.second < current_time_) {
-            it = arp_table_.erase(it);
+  currtime_ += ms_since_last_tick;
+  for (auto it = arp_table.begin(); it != arp_table.end(); ) {
+        if (it->second.second < currtime_) {
+            it = arp_table.erase(it);
         } else {
             ++it;
         }
     }
-    for (auto it = frame_queue_.begin(); it != frame_queue_.end(); ) {
-        if (it->second.first.empty() && (!it->second.second.has_value() || it->second.second < current_time_)) {
-            it = frame_queue_.erase(it);
+    for (auto it = frame_queue.begin(); it != frame_queue.end(); ) {
+        if (it->second.first.empty() && (!it->second.second.has_value() || it->second.second < currtime_)) {
+            it = frame_queue.erase(it);
         } else {
             ++it;
         }

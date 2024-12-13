@@ -49,11 +49,11 @@ private:
 
   std::queue<InternetDatagram> datagrams_received_ {};
 
-  size_t current_time_;
+  size_t currtime_;
 
-  unordered_map<uint32_t , std::pair<EthernetAddress, size_t>> arp_table_;
+  unordered_map<uint32_t , std::pair<EthernetAddress, size_t>> arp_table;
 
-  unordered_map<uint32_t ,pair<queue<EthernetFrame>, optional<size_t>>> frame_queue_;
+  unordered_map<uint32_t ,pair<queue<EthernetFrame>, optional<size_t>>> frame_queue;
  void construct_ethernet_frame(EthernetFrame& frame, const ARPMessage& message, const EthernetAddress& dst) const;
   void make_arp_response( const ARPMessage& message, EthernetFrame& response ) const;
   void send_arp_request( const uint32_t target_ip ,EthernetFrame& arp_request_frame ) ;
